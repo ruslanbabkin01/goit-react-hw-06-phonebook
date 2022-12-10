@@ -1,40 +1,37 @@
-import PropTypes from 'prop-types';
-import { useState } from 'react';
+import { Notify } from 'notiflix';
 import { nanoid } from 'nanoid';
 import { Form, Label, BtnAdd } from './ContactForm.styled';
+import { useSelector, useDispatch } from 'react-redux';
+import { getContacts } from 'redux/selectors';
+import { addContact } from '../../redux/slice';
 
-export const ContactForm = ({ onSubmit }) => {
-  const [name, setName] = useState('');
-  const [number, setNumber] = useState('');
+export const ContactForm = () => {
+  const contacts = useSelector(getContacts);
+  const dispatch = useDispatch();
 
   const nameInputId = nanoid();
   const numberInputId = nanoid();
 
-  const handleChange = event => {
-    const { name, value } = event.target;
-    switch (name) {
-      case 'name':
-        setName(value);
-        break;
-
-      case 'number':
-        setNumber(value);
-        break;
-
-      default:
-        return;
-    }
-  };
-
   const handleSubmit = e => {
     e.preventDefault();
-    onSubmit(name, number);
-    reset();
-  };
+    const form = e.currentTarget;
+    const name = form.elements.name.value;
+    const number = form.elements.number.value;
 
-  const reset = () => {
-    setName('');
-    setNumber('');
+    const newContact = {
+      id: nanoid(),
+      name,
+      number,
+    };
+
+    const currentName = name;
+    const matchName = contacts.find(contact => contact.name === currentName);
+
+    matchName
+      ? Notify.info(`${name} is already in contacts`)
+      : dispatch(addContact(newContact));
+
+    form.reset();
   };
 
   return (
@@ -42,8 +39,6 @@ export const ContactForm = ({ onSubmit }) => {
       <Label htmlFor={nameInputId}>
         Name
         <input
-          value={name}
-          onChange={handleChange}
           type="text"
           name="name"
           pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
@@ -55,8 +50,6 @@ export const ContactForm = ({ onSubmit }) => {
       <Label htmlFor={numberInputId}>
         Number
         <input
-          value={number}
-          onChange={handleChange}
           type="tel"
           name="number"
           pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
@@ -68,8 +61,4 @@ export const ContactForm = ({ onSubmit }) => {
       <BtnAdd type="submit">Add contact</BtnAdd>
     </Form>
   );
-};
-
-ContactForm.propTypes = {
-  onSubmit: PropTypes.func,
 };
